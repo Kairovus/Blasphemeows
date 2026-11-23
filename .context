@@ -1,0 +1,303 @@
+PROJECT MANAGEMENT PLAN & PROPOSAL
+
+Pengembangan Game 2D Action RPG Metroidvania Menggunakan Java dan libGDX
+
+1. Pendahuluan
+1.1 Latar Belakang
+Pengembangan game merupakan salah satu penerapan pemrograman berorientasi objek (Object-Oriented Programming/OOP) yang memungkinkan berbagai konsep pemrograman diterapkan ke dalam sebuah sistem interaktif. Dalam proyek ini, dikembangkan sebuah game 2D bergenre Action RPG dengan struktur Metroidvania menggunakan bahasa pemrograman Java dan framework libGDX.
+Proyek ini bertujuan untuk menghasilkan sebuah game yang menggabungkan eksplorasi dunia, slow weapon based combat, serta sistem upgrade character. Memfokuskan proyek dengan menerapkan prinsip OOP yaitu encapsulation, inheritance, abstraction, dan polymorphism, serta menggunakan design pattern untuk pembuatan game agar hasil game terstruktur, dan scalable.
+
+1.2 Tujuan Proyek
+Tujuan dari pengembangan proyek ini adalah:
+Mengembangkan game 2D Action RPG dengan mekanisme eksplorasi dan pertarungan.
+Menerapkan konsep Object-Oriented Programming dalam pengembangan sistem permainan.
+Mengimplementasikan design pattern yang relevan untuk menyelesaikan permasalahan dalam arsitektur game.
+Mengembangkan sistem karakter, senjata, musuh, dan progres permainan yang saling terintegrasi.
+Melatih kemampuan kolaborasi, pembagian tugas, penggunaan Git, dan pengelolaan proyek perangkat lunak.
+
+1.3 Teknologi yang Digunakan
+Teknologi yang direncanakan dan digunakan dalam proyek ini meliputi:
+Komponen
+Teknologi
+Bahasa Pemrograman
+Java
+IDE
+IntelliJ IDEA
+Framework Game
+libGDX
+Desktop Backend
+LWJGL3
+Build System
+Gradle
+Physics
+Box2D
+Map Editor
+Tiled
+User Interface
+Scene2D / VisUI
+Version Control
+Git dan GitHub
+
+
+2. Deskripsi dan Konsep Game
+2.1 Gambaran Umum
+Game yang dikembangkan merupakan sebuah 2D Action RPG dengan struktur Metroidvania. Pemain akan menjelajahi dunia yang terdiri dari beberapa wilayah dengan karakteristik lingkungan, jenis musuh, dan tantangan yang berbeda.
+Permainan dimulai dari sebuah Tutorial Hub yang memperkenalkan mekanisme dasar permainan, seperti pergerakan karakter, pertarungan, penggunaan senjata, serta mekanisme dodge. Setelah menyelesaikan tutorial, pemain dapat menjelajahi tiga wilayah utama secara bebas.
+Setiap wilayah memiliki tiga jenis musuh, satu regional boss, serta satu upgrade karakter unik. Pemain harus menyelesaikan ketiga wilayah tersebut untuk membuka akses menuju pertarungan terakhir, yaitu Final Boss.
+
+2.2 Struktur Dunia Permainan
+Struktur dunia permainan terdiri dari:
+A. Tutorial Hub
+Tutorial Hub merupakan area awal yang berfungsi sebagai tempat pemain mempelajari mekanisme dasar permainan. Area ini memperkenalkan movement, combat, dodge, dan penggunaan equipment sebelum pemain memasuki wilayah Main hub untuk memulai eksplorasi.
+
+B. The Forgotten Temple
+The Forgotten Temple merupakan wilayah bertema kuil dan bela diri yang terinspirasi dari lingkungan Shaolin. Wilayah ini memiliki musuh yang relatif aktif dan mengandalkan pergerakan cepat, termasuk kemampuan melakukan dash untuk mendekati atau menghindari pemain.
+Upgrade yang diperoleh dari wilayah ini adalah Monk Dash, yaitu peningkatan kemampuan dodge yang memberikan jarak pergerakan lebih jauh serta durasi invincibility frame (i-frame) yang lebih besar.
+Jenis musuh:
+Corrupted Monk: Musuh melee yang menggunakan serangan bela diri dan dash untuk mendekati pemain.
+Shadow Ninja: Musuh ranged yang menyerang menggunakan shuriken dan dapat menjaga jarak dari pemain.
+Diving Harpy: Musuh udara yang dapat melayang dan melakukan serangan dash menukik langsung ke arah pemain.
+
+C. Ashen Foundry
+Ashen Foundry merupakan wilayah bertema industri dan blacksmith dengan lingkungan yang dipenuhi elemen panas serta struktur mekanis. Musuh pada wilayah ini memiliki karakteristik lebih lambat, tetapi mempunyai health dan damage yang lebih tinggi.
+Upgrade yang diperoleh adalah Seismic Slam, yaitu kemampuan untuk melakukan hentakan ke tanah yang menghasilkan serangan area atau shockwave.
+Jenis musuh:
+Forge Brute: Musuh melee dengan health tinggi dan serangan palu yang menghasilkan damage besar.
+Slag Hurler: Musuh ranged yang menyerang dengan melemparkan material panas atau molten slag.
+Shield Bulwark: Musuh khusus yang menggunakan perisai dan tidak dapat diserang dari bagian depan secara normal. Pemain harus menunggu kesempatan ketika musuh melakukan serangan, kemudian menggunakan heavy attack untuk memberikan stagger dan membuka vulnerability window selama satu detik.
+
+D. Overgrown Spire
+Overgrown Spire merupakan wilayah bertema alam yang dipenuhi vegetasi, jamur, dan kekuatan sihir. Musuh pada wilayah ini lebih berfokus pada serangan jarak jauh, pemanggilan minion, serta kemampuan menghambat pergerakan pemain.
+Upgrade yang diperoleh adalah Glacial Orb, yaitu kemampuan untuk meluncurkan bola es yang dapat membekukan atau memberikan stun kepada musuh selama 1,5 detik sehingga pemain memiliki kesempatan untuk menyerang.
+Jenis musuh:
+Pyromancer: Musuh magic yang menyerang menggunakan bola api.
+Spore Summoner: Musuh yang dapat memanggil minion untuk membantu menyerang pemain.
+Root Weaver: Musuh khusus yang dapat menumbuhkan akar dari tanah untuk menjerat pemain. Pemain harus menekan tombol kiri dan kanan secara bergantian untuk melepaskan diri dari jeratan tersebut.
+
+E. Final Region — The Hollow Altars of the Crooked Saints
+The Hollow Altars of the Crooked Saints merupakan wilayah terakhir yang menjadi tempat pertarungan Final Boss.
+Sistem akan memeriksa status penyelesaian ketiga wilayah utama. Apabila pemain telah menyelesaikan The Forgotten Temple, Ashen Foundry, dan Overgrown Spire, maka Final Region akan terbuka.
+Wilayah ini menjadi penutup dari keseluruhan progres permainan dan menghadirkan tantangan terakhir bagi pemain.
+
+2.3 Sistem Gameplay
+Beberapa fitur utama yang direncanakan dalam permainan meliputi:
+A. Player Movement
+Pergerakan karakter ke berbagai arah.
+Dodge untuk menghindari serangan musuh.
+Monk Dash sebagai peningkatan kemampuan dodge (allows air dodge).
+Jump dan mekanisme serangan udara.
+
+B. Combat System
+Sistem pertarungan menyediakan beberapa jenis serangan:
+Light Attack: Serangan cepat dengan damage relatif rendah.
+Heavy Attack: Serangan lebih lambat dengan damage lebih tinggi.
+Dodge: Mekanisme menghindari serangan musuh.
+Jump Attack: Serangan yang dilakukan ketika karakter berada di udara.
+Combo Attack System: Setiap senjata memiliki combo system masing-masing dengan scaling damage yang berbeda.
+
+C. Weapon System
+Pemain dapat menggunakan tiga jenis senjata dengan karakteristik berbeda:
+Sword: senjata all-round dengan keseimbangan antara damage dan kecepatan serangan.
+Greatsword: senjata yang berfokus pada damage tinggi, tetapi memiliki kecepatan serangan lebih lambat.
+Spear: senjata dengan jangkauan serangan lebih jauh dan damage menengah.
+
+D. RPG Attribute System
+Karakter memiliki empat atribut utama:
+Attribute
+Effect
+Vitality
+Menentukan maximum HP
+Strength
+Meningkatkan physical damage
+Endurance
+Menentukan maximum stamina
+Dexterity
+Memengaruhi recovery setelah attack dan dodge.
+
+Sistem perkembangan karakter menggunakan peningkatan atribut numerik agar tetap sederhana dan tidak membutuhkan skill tree atau class system yang kompleks.
+
+E. Supporting Systems
+Fitur pendukung yang direncanakan meliputi:
+Health dan stamina management.
+Equipment dan Level.
+Enemy AI dan boss behavior.
+Checkpoint.
+HUD dan menu permainan.
+Sistem progres untuk mencatat wilayah dan ability yang telah dibuka.
+
+3. Design Pattern
+Dalam pengembangan game ini, design pattern digunakan untuk menyelesaikan permasalahan desain dan memisahkan tanggung jawab antar bagian sistem. Enam design pattern utama yang menjadi prioritas adalah sebagai berikut.
+
+3.1 State Pattern
+State Pattern digunakan untuk mengatur perubahan kondisi karakter pemain dan musuh berdasarkan situasi permainan.
+Contohnya, pemain dapat berada dalam kondisi Idle, Move, Attack, Dash, Seismic Slam, Rooted, atau Stunned.
+Dengan menggunakan State Pattern, setiap kondisi dapat memiliki perilaku dan aturan transisi tersendiri tanpa harus menumpuk banyak conditional statement di dalam satu class.
+Implementasi direncanakan melalui interface PlayerState dan PlayerStateMachine.
+
+
+3.2 Strategy Pattern
+Strategy Pattern digunakan untuk memisahkan implementasi perilaku serangan berdasarkan jenis senjata yang digunakan pemain dan strategy pattern juga digunakan untuk setiap musuh dan bagaimana mereka bertindak terhadap kondisi player.
+Setiap senjata memiliki karakteristik serangan yang berbeda, sehingga mekanisme serangannya dapat diimplementasikan melalui strategi tersendiri.
+Contohnya:
+SwordAttackStrategy.
+GreatswordAttackStrategy.
+SpearAttackStrategy.
+
+Dengan pendekatan ini, pemain dapat mengganti senjata tanpa harus mengubah keseluruhan implementasi sistem combat.
+
+3.3 Factory Pattern
+Factory Pattern digunakan untuk membuat dan menginisialisasi objek musuh berdasarkan wilayah tempat musuh tersebut muncul.
+Setiap wilayah memiliki jenis musuh yang berbeda. Oleh karena itu, EnemyFactory dapat menyediakan implementasi khusus untuk setiap wilayah.
+Contoh implementasi:
+ForgottenTempleEnemyFactory.
+AshenFoundryEnemyFactory.
+OvergrownSpireEnemyFactory.
+HollowAltarsEnemyFactory.
+Pendekatan ini mempermudah proses spawning musuh dan menjaga agar proses pembuatan objek tidak tercampur dengan logika utama permainan.
+
+3.4 Observer Pattern
+Observer Pattern digunakan untuk menghubungkan perubahan kondisi permainan dengan sistem lain yang membutuhkan informasi tersebut.
+Contohnya, ketika HP atau stamina pemain berubah, sistem dapat mengirimkan notifikasi kepada observer agar HUD diperbarui secara otomatis.
+Implementasi melibatkan PlayerObserver sebagai interface dan CombatLogObserver sebagai salah satu implementasi observer.
+
+3.5 Command Pattern
+Command Pattern digunakan untuk memisahkan input fisik pemain dari aksi yang dijalankan oleh karakter.
+Setiap input akan diterjemahkan menjadi sebuah command yang kemudian dieksekusi oleh sistem permainan.
+Contohnya:
+LightAttackCommand.
+HeavyAttackCommand.
+DodgeOrDashCommand.
+SeismicSlamCommand.
+GlacialOrbCommand.
+QTEMashCommand.
+Dengan pendekatan ini, pengelolaan input menjadi lebih terstruktur dan mudah dikembangkan.
+
+3.6 Singleton Pattern
+Singleton Pattern digunakan untuk menyediakan akses terpusat terhadap sistem yang membutuhkan satu instance global.
+Contoh penerapannya adalah GameManager yang bertanggung jawab mengelola progres permainan, status penyelesaian wilayah, serta ability yang telah dibuka.
+Selain itu, SaveManager juga direncanakan sebagai salah satu sistem yang dapat menggunakan pendekatan Singleton apabila diperlukan.
+
+4. Project Management Plan
+4.1 Metode Pengembangan
+Pengembangan proyek dilakukan secara bertahap dengan memprioritaskan pembuatan vertical slice, yaitu bagian kecil permainan yang telah memiliki mekanisme inti dan dapat dimainkan.
+Pendekatan ini bertujuan agar sistem utama dapat diuji dan dievaluasi sebelum pengembangan diperluas ke seluruh wilayah permainan.
+Tahapan pengembangan direncanakan sebagai berikut:
+Tahap 1 — Project Setup
+Menyiapkan project Java dan libGDX.
+Mengatur Gradle dan konfigurasi awal.
+Membuat repository GitHub.
+Menentukan struktur package dan pembagian tanggung jawab sistem.
+Tahap 2 — Core System
+Mengembangkan pergerakan karakter.
+Mengimplementasikan collision.
+Membuat sistem state pemain.
+Mengembangkan health dan stamina.
+Mengembangkan Map
+Tahap 3 — Combat System
+Mengembangkan light attack dan heavy attack.
+Mengembangkan sistem attack combo.
+Mengimplementasikan sistem hitbox.
+Membuat mekanisme dodge.
+Mengimplementasikan Strategy dan Command Pattern.
+Tahap 4 — Enemy System
+Mengembangkan base class Enemy.
+Membuat perilaku musuh berdasarkan wilayah.
+Mengimplementasikan Factory Pattern.
+Mengembangkan sistem damage, stagger, dan vulnerability window.
+Tahap 5 — Progression System
+Mengembangkan sistem attribute dan equipment.
+Mengimplementasikan tiga ability unik.
+Membuat sistem pencatatan progres wilayah.
+Mengembangkan checkpoint dan save/load.
+Tahap 6 — Integration and Finalization
+Mengintegrasikan seluruh sistem.
+Mengembangkan Final Boss.
+Melakukan pengujian dan balancing.
+Memperbaiki bug.
+Menyelesaikan dokumentasi dan presentasi proyek.
+
+4.2 Task Distribution
+Pembagian tugas dilakukan berdasarkan modul utama permainan agar setiap anggota dapat mengembangkan bagian sistem yang berbeda dan kemudian mengintegrasikannya.
+Rencana pembagian tugas:
+Posisi
+Tanggung Jawab
+Project Lead, Player, Combat- Bahari
+Koordinasi proyek, arsitektur sistem, integrasi, dan pengawasan perkembangan. Movement, state pemain, health, stamina, dan attribute, Weapon system, hitbox, attack strategy, dan command. Boss behaviour.
+Enemy System Developer -
+Enemy AI,Factory Pattern, dan mekanisme musuh
+World & UI Developer -
+Map, HUD, inventory, dan menu
+
+Pembagian tersebut merupakan rancangan awal dan dapat disesuaikan dengan jumlah anggota serta perkembangan kebutuhan proyek. Setiap anggota juga bertanggung jawab melakukan pengujian terhadap modul yang dikembangkan.
+
+4.3 Version Control dan Kolaborasi
+Pengelolaan source code dilakukan menggunakan Git dan GitHub. Setiap anggota dapat mengembangkan modul masing-masing melalui branch terpisah untuk mengurangi kemungkinan konflik kode.
+Alur kolaborasi yang direncanakan adalah:
+Membuat task berdasarkan fitur yang akan dikembangkan.
+Membuat branch baru untuk setiap pekerjaan.
+Melakukan implementasi dan pengujian lokal.
+Melakukan commit dengan pesan yang menjelaskan perubahan.
+Menggabungkan perubahan ke branch utama setelah dilakukan pemeriksaan.
+Melakukan pengujian ulang terhadap hasil integrasi.
+Pendekatan ini diharapkan dapat menjaga konsistensi source code dan mempermudah pelacakan perubahan selama pengembangan.
+
+4.4 Pengujian dan Evaluasi
+Pengujian dilakukan secara bertahap pada setiap modul sebelum seluruh sistem diintegrasikan.
+Beberapa aspek yang menjadi fokus pengujian adalah:
+Player movement dan collision.
+Perhitungan damage dan konsumsi stamina.
+Perilaku serangan.
+Transisi state pemain dan musuh.
+Mekanisme ability pada setiap wilayah.
+Sistem spawning musuh.
+Sistem progres dan pembukaan Final Region.
+Integrasi HUD, inventory, dan save/load.
+Evaluasi dilakukan berdasarkan keberhasilan fitur berjalan sesuai spesifikasi dan tidak menyebabkan gangguan pada sistem lain.
+
+4.5 Risiko Pengembangan
+Beberapa risiko yang mungkin dihadapi selama pengembangan antara lain:
+A. Kompleksitas Sistem
+Banyaknya sistem yang saling terhubung dapat meningkatkan kompleksitas kode.
+Mitigasi: Menggunakan modularisasi, interface, dan design pattern yang relevan serta menghindari abstraksi yang tidak diperlukan.
+B. Konflik Integrasi
+Pengembangan oleh beberapa anggota dapat menyebabkan konflik ketika perubahan digabungkan.
+Mitigasi: Menggunakan branch terpisah, melakukan integrasi berkala, dan menetapkan struktur kode yang disepakati bersama.
+C. Keterbatasan Waktu
+Pengembangan seluruh wilayah, musuh, dan boss membutuhkan waktu yang cukup besar.
+Mitigasi: Memprioritaskan core gameplay dan vertical slice terlebih dahulu. Konten tambahan dapat disesuaikan berdasarkan waktu yang tersedia.
+D. Bug pada Gameplay
+Sistem combat, collision, dan state dapat menghasilkan perilaku yang tidak sesuai apabila tidak diuji secara teratur.
+Mitigasi: Melakukan pengujian setiap modul secara terpisah sebelum integrasi.
+
+5. Struktur Implementasi Proyek
+Berdasarkan perkembangan implementasi, proyek telah memiliki rancangan struktur direktori yang membagi sistem permainan ke dalam beberapa package berdasarkan tanggung jawabnya.
+Struktur tersebut meliputi:
+core — Mengelola sistem utama permainan, termasuk GameManager.
+model — Menyimpan data atribut karakter dan model permainan.
+observer — Mengelola komunikasi perubahan status permainan.
+combat — Mengelola sistem serangan, hitbox, dan strategi senjata.
+command — Mengelola penerjemahan input menjadi aksi permainan.
+state — Mengelola kondisi dan transisi state pemain.
+player — Mengelola entitas dan sistem karakter pemain.
+enemy — Mengelola entitas musuh dan implementasi Factory Pattern.
+
+
+Beberapa class yang telah tercantum dalam struktur implementasi antara lain Player, PlayerAttributes, GameManager, AttackStrategy, Hitbox, PlayerStateMachine, serta berbagai implementasi musuh seperti TempleMonk, ForgeBrute, dan RootWeaver.
+Struktur ini menjadi fondasi untuk pengembangan lebih lanjut dan dapat berkembang sesuai kebutuhan implementasi.
+
+6. Repository dan Dokumentasi Presentasi
+6.1 GitHub Repository
+Source code proyek dikelola menggunakan GitHub sebagai tempat penyimpanan utama dan media kolaborasi antaranggota.
+Link GitHub:
+[Masukkan link repository GitHub]
+6.2 Video Presentasi
+Video presentasi digunakan untuk menjelaskan konsep game, fitur yang direncanakan, design pattern, serta rencana pengelolaan dan pembagian tugas proyek.
+Link Video Presentasi:
+[Masukkan link video presentasi]
+Pastikan kedua tautan dapat diakses oleh dosen atau pihak yang melakukan penilaian.
+
+7. Penutup
+Melalui proyek ini, tim berupaya mengembangkan sebuah game 2D Action RPG Metroidvania yang tidak hanya berfokus pada pengalaman bermain, tetapi juga pada penerapan prinsip Object-Oriented Programming dan design pattern dalam pengembangan perangkat lunak.
+Dengan pembagian sistem yang modular, penggunaan design pattern yang sesuai, serta pengelolaan proyek melalui Git dan GitHub, pengembangan diharapkan dapat berjalan secara terstruktur dan kolaboratif.
+Prioritas utama proyek adalah menghasilkan mekanisme inti permainan yang stabil dan dapat dimainkan sebelum memperluas konten ke seluruh wilayah. Dengan demikian, hasil akhir diharapkan mampu memenuhi tujuan pembelajaran OOP sekaligus menghasilkan sebuah game dengan sistem yang terorganisasi dan pengalaman bermain yang menarik.
+

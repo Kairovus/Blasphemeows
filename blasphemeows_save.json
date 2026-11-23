@@ -1,0 +1,12 @@
+{
+"currentXP": 22,
+"unlockedAbilities": [
+	"MONK_DASH"
+],
+"completedRegions": [
+	"FORGOTTEN_TEMPLE"
+],
+"lastCheckpointId": "overgrown_spire_checkpoint",
+"lastCheckpointRegion": "OVERGROWN_SPIRE",
+"respawnX": 110
+}
