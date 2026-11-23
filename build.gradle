@@ -27,6 +27,11 @@ allprojects {
 
 configure(subprojects) {
   apply plugin: 'java-library'
+  java {
+    toolchain {
+      languageVersion = JavaLanguageVersion.of(17)
+    }
+  }
   java.sourceCompatibility = 8
   java.targetCompatibility = 8
 
