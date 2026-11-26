@@ -64,8 +64,9 @@ public class Main extends ApplicationAdapter {
     private InputHandler inputHandler;
     private EnemyFactory currentEnemyFactory;
 
-    // Player Animation state
+    // Player & Enemy Animation state
     private float playerAnimTime = 0f;
+    private float enemyAnimTime = 0f;
     private String lastAnimKey = "";
 
     // World entities
@@ -259,7 +260,7 @@ public class Main extends ApplicationAdapter {
         activePlatforms.add(new Platform(560f, 210f, 180f, 14f));
         activePlatforms.add(new Platform(800f, 150f, 180f, 14f));
 
-        // Spawn regional foes
+        // Spawn regional foes (Melee: Corrupted Monk, Ranged: Shadow Ninja, Special: Diving Harpy)
         float spawnStartX = 420f;
         activeEnemies.add(currentEnemyFactory.createMeleeEnemy(spawnStartX, groundY));
         activeEnemies.add(currentEnemyFactory.createRangedEnemy(spawnStartX + 160f, groundY));
@@ -498,24 +499,29 @@ public class Main extends ApplicationAdapter {
             }
         }
 
-        // Render Enemies
+        // Render Enemies (Kotak untuk Shadow Ninja, Diving Harpy, TrainingDummy; Corrupted Monk pakai sprite)
         for (Enemy enemy : activeEnemies) {
-            if (enemy.isFrozen()) {
-                shapeRenderer.setColor(Color.SKY);
-            } else if (enemy.isStunnedOrFrozen()) {
-                shapeRenderer.setColor(Color.YELLOW);
-            } else if (enemy instanceof TrainingDummy) {
-                TrainingDummy td = (TrainingDummy) enemy;
-                shapeRenderer.setColor(td.isAggressiveMode() ? Color.ORANGE : Color.YELLOW);
-            } else if (enemy instanceof ShieldBulwark) {
-                ShieldBulwark bulwark = (ShieldBulwark) enemy;
-                shapeRenderer.setColor(bulwark.isInVulnerableWindow() ? Color.RED : Color.DARK_GRAY);
-            } else {
-                shapeRenderer.setColor(Color.CORAL);
-            }
-            shapeRenderer.rect(enemy.getX(), enemy.getY(), enemy.getWidth(), enemy.getHeight());
+            boolean isMonk = enemy.getName().toLowerCase().contains("monk");
+            boolean hasMonkSprite = isMonk && AssetManager.getInstance().getAnimation("monk_idle") != null;
 
-            // Health bar
+            if (!hasMonkSprite) {
+                if (enemy.isFrozen()) {
+                    shapeRenderer.setColor(Color.SKY);
+                } else if (enemy.isStunnedOrFrozen()) {
+                    shapeRenderer.setColor(Color.YELLOW);
+                } else if (enemy instanceof TrainingDummy) {
+                    TrainingDummy td = (TrainingDummy) enemy;
+                    shapeRenderer.setColor(td.isAggressiveMode() ? Color.ORANGE : Color.YELLOW);
+                } else if (enemy instanceof ShieldBulwark) {
+                    ShieldBulwark bulwark = (ShieldBulwark) enemy;
+                    shapeRenderer.setColor(bulwark.isInVulnerableWindow() ? Color.RED : Color.DARK_GRAY);
+                } else {
+                    shapeRenderer.setColor(Color.CORAL);
+                }
+                shapeRenderer.rect(enemy.getX(), enemy.getY(), enemy.getWidth(), enemy.getHeight());
+            }
+
+            // Health bar (tetap muncul untuk semua musuh)
             float barW = enemy.getWidth();
             float hpPct = (float) enemy.getHp() / enemy.getMaxHp();
             shapeRenderer.setColor(Color.BLACK);
@@ -526,17 +532,85 @@ public class Main extends ApplicationAdapter {
         shapeRenderer.end();
 
         // ==========================================
-        // 2. RENDER PLAYER SPRITE (Digambar sebelum hitbox agar hitbox terlihat jelas)
+        // 2. RENDER PLAYER & ENEMY SPRITES
         // ==========================================
+        enemyAnimTime += delta;
         batch.setProjectionMatrix(worldCamera.combined);
         batch.begin();
 
+        // --- 2A. RENDER ENEMY SPRITES (Khusus Corrupted Monk) ---
+        for (Enemy enemy : activeEnemies) {
+            if (!enemy.isAlive()) continue;
+
+            // Hanya render sprite ini untuk Corrupted Monk (Shadow Ninja & Diving Harpy dilewati)
+            if (!enemy.getName().toLowerCase().contains("monk")) continue;
+
+            String enemyAnimKey = "monk_idle";
+            Hitbox ehb = enemy.getCurrentAttackHitbox();
+            if (ehb != null && !ehb.isFinished()) {
+                enemyAnimKey = "monk_attack";
+            } else if (Math.abs(enemy.getX() - player.getX()) > 70f) {
+                enemyAnimKey = "monk_walk";
+            }
+
+            Animation<TextureRegion> eAnim = AssetManager.getInstance().getAnimation(enemyAnimKey);
+            if (eAnim != null) {
+                TextureRegion eFrame = eAnim.getKeyFrame(enemyAnimTime, true);
+
+                if (enemy.isFrozen()) {
+                    batch.setColor(Color.SKY);
+                } else if (enemy.isStunnedOrFrozen()) {
+                    batch.setColor(Color.YELLOW);
+                } else {
+                    batch.setColor(Color.WHITE);
+                }
+
+                float aspectRatio = (float) eFrame.getRegionWidth() / (float) eFrame.getRegionHeight();
+                float eDrawH = 120f;
+                float eDrawW = eDrawH * aspectRatio;
+                boolean enemyFacingRight = player.getX() >= enemy.getX();
+
+                float eDrawX = enemy.getX() + (enemy.getWidth() / 2f) - (eDrawW / 2f);
+                float eDrawY = enemy.getY();
+
+                if (enemyFacingRight) {
+                    batch.draw(eFrame, eDrawX, eDrawY, eDrawW, eDrawH);
+                } else {
+                    batch.draw(eFrame, eDrawX + eDrawW, eDrawY, -eDrawW, eDrawH);
+                }
+                batch.setColor(Color.WHITE);
+            }
+        }
+
+        // --- 2B. RENDER PLAYER SPRITE (Si Meong) ---
         String animKey = "Meong_Idle";
         PlayerState state = player.getStateMachine().getCurrentState();
 
         if (state instanceof AttackState) {
             AttackState atkState = (AttackState) state;
-            animKey = atkState.getAttackData().isHeavy() ? "Meong_Heavy" : "Meong_Light";
+            String seq = player.getComboManager().getSequenceString();
+            String baseAttackKey;
+
+            if (atkState.getAttackData().isHeavy()) {
+                if (seq.endsWith("L, L, H")) {
+                    baseAttackKey = "Meong_LLH_3"; // Finisher LLH
+                } else if (seq.endsWith("H, H")) {
+                    baseAttackKey = "Meong_HH_2";  // Hit ke-2 HH
+                } else {
+                    baseAttackKey = "Meong_Heavy"; // Heavy awal tetap pakai Meong_Heavy
+                }
+            } else {
+                if (seq.endsWith("L, L, L")) {
+                    baseAttackKey = "Meong_LLL_3"; // Hit ke-3 LLL
+                } else if (seq.endsWith("L, L")) {
+                    baseAttackKey = "Meong_LLL_2"; // Hit ke-2 LLL
+                } else {
+                    baseAttackKey = "Meong_Light"; // Light awal tetap pakai Meong_Light
+                }
+            }
+
+            animKey = baseAttackKey + "#" + seq;
+
         } else if (state instanceof DashState) {
             animKey = "Meong_Dash";
         } else if (state instanceof JumpState || state instanceof SeismicSlamState) {
@@ -552,7 +626,8 @@ public class Main extends ApplicationAdapter {
             playerAnimTime += delta;
         }
 
-        Animation<TextureRegion> currentAnim = AssetManager.getInstance().getAnimation(animKey);
+        String lookupKey = animKey.contains("#") ? animKey.substring(0, animKey.indexOf("#")) : animKey;
+        Animation<TextureRegion> currentAnim = AssetManager.getInstance().getAnimation(lookupKey);
         if (currentAnim == null) {
             currentAnim = AssetManager.getInstance().getAnimation("Meong_Idle");
         }
@@ -568,8 +643,12 @@ public class Main extends ApplicationAdapter {
                 batch.setColor(Color.WHITE);
             }
 
-            boolean isLompatAnim = animKey.equals("Meong_MauLompat") || animKey.equals("Meong_Lompat");
-            boolean isAttackAnim = animKey.equals("Meong_Light") || animKey.equals("Meong_Heavy");
+            boolean isLompatAnim = lookupKey.equals("Meong_MauLompat") || lookupKey.equals("Meong_Lompat");
+            boolean isAttackAnim = lookupKey.equals("Meong_Light")
+                || lookupKey.equals("Meong_Heavy")
+                || lookupKey.startsWith("Meong_LLL")
+                || lookupKey.startsWith("Meong_HH")
+                || lookupKey.startsWith("Meong_LLH");
 
             float drawW;
             float drawH;
@@ -582,13 +661,20 @@ public class Main extends ApplicationAdapter {
                 xOffset = player.isFacingRight() ? 2f : -2f;
                 drawY = player.getY() - 2f;
             } else if (isAttackAnim) {
-                // Attack: kaki menapak lantai
+                // Attack & Combo: kaki menapak lantai
                 drawW = 140f;
                 drawH = 140f;
                 xOffset = player.isFacingRight() ? 14f : -14f;
                 drawY = player.getY() - 36f;
-            } else if (animKey.equals("Meong_Run") || animKey.equals("Meong_Dash")) {
-                // Run & Dash: kaki sejajar garis hijau
+            } else if (lookupKey.equals("Meong_Dash")) {
+                // Dash (1x4): pakai aspectRatio asli agar tidak melar & skala 205f agar sejajar kotak hijau
+                float aspectRatio = (float) frame.getRegionWidth() / (float) frame.getRegionHeight();
+                drawH = 205f;
+                drawW = drawH * aspectRatio;
+                xOffset = player.isFacingRight() ? 2f : -2f;
+                drawY = player.getY() - 78f;
+            } else if (lookupKey.equals("Meong_Run")) {
+                // Run: kaki sejajar garis hijau
                 drawW = 140f;
                 drawH = 140f;
                 xOffset = player.isFacingRight() ? 14f : -14f;
