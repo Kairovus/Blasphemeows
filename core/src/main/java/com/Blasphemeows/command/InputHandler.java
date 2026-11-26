@@ -7,6 +7,7 @@ import com.Blasphemeows.combat.SpearAttackStrategy;
 import com.Blasphemeows.combat.SwordAttackStrategy;
 import com.Blasphemeows.player.Player;
 import com.Blasphemeows.state.RootedState;
+import com.Blasphemeows.state.ComboRecoveryState;
 
 /**
  * Translates hardware keyboard inputs into Command objects and dispatches them to the Player.
@@ -23,6 +24,8 @@ public class InputHandler {
 
     public void handleInput(Player player) {
         if (player == null || Gdx.input == null) return;
+
+        if (player.getStateMachine().getCurrentState() instanceof ComboRecoveryState) return;
 
         boolean isRooted = player.getStateMachine().getCurrentState() instanceof RootedState;
 

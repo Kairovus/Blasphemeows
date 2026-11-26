@@ -1,13 +1,24 @@
 # Blasphemeows
 
-A [libGDX](https://libgdx.com/) project generated with [gdx-liftoff](https://github.com/libgdx/gdx-liftoff).
-
-This project was generated with a template including simple application launchers and an `ApplicationAdapter` extension that draws libGDX logo.
+A [libGDX](https://libgdx.com/) action game with a Spring Boot backend for accounts, scores, and a leaderboard.
 
 ## Platforms
 
 - `core`: Main module with the application logic shared by all platforms.
 - `lwjgl3`: Primary desktop platform using LWJGL3; was called 'desktop' in older docs.
+- `backend`: Spring Boot API (JWT auth, score history, public leaderboard). See [backend/README.md](backend/README.md).
+
+## Online scores (game ↔ backend)
+
+1. Start Postgres + API (from repo root: `docker compose up -d db`, then `cd backend && gradlew.bat bootRun`).
+2. Run the game: `gradlew.bat lwjgl3:run`.
+3. In-game keys:
+   - **F7** register / **F6** login (demo user `player1` / `password`)
+   - Defeat enemies to accumulate score (shown on the HUD)
+   - Score uploads automatically on death, or press **F9** to submit now
+   - **F8** fetch top leaderboard entries into the combat log
+
+The client talks to `http://localhost:8080` by default. Override with `-Dblasphemeows.apiBaseUrl=https://your-host`.
 
 ## Gradle
 

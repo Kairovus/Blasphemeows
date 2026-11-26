@@ -17,6 +17,8 @@ public class Checkpoint {
     private final float y;
     private final float width;
     private final float height;
+    private float respawnX;
+    private float respawnY;
     private boolean activated = false;
 
     public Checkpoint(String id, String name, GameManager.Region region, float x, float y, float width, float height) {
@@ -27,6 +29,13 @@ public class Checkpoint {
         this.y = y;
         this.width = width;
         this.height = height;
+        this.respawnX = x + 20f;
+        this.respawnY = y;
+    }
+
+    public void setRespawnPosition(float respawnX, float respawnY) {
+        this.respawnX = respawnX;
+        this.respawnY = respawnY;
     }
 
     public boolean isPlayerNearby(float playerX, float playerY) {
@@ -47,6 +56,8 @@ public class Checkpoint {
     public float getY() { return y; }
     public float getWidth() { return width; }
     public float getHeight() { return height; }
+    public float getRespawnX() { return respawnX; }
+    public float getRespawnY() { return respawnY; }
     public boolean isActivated() { return activated; }
     public void setActivated(boolean activated) { this.activated = activated; }
     public Color getColor() { return activated ? Color.FIREBRICK : Color.LIGHT_GRAY; }

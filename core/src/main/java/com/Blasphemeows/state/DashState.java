@@ -22,6 +22,9 @@ public class DashState implements PlayerState {
     @Override
     public void enter(Player player) {
         player.setInvincible(true);
+        if (isMonkDashUpgraded) {
+            player.setVelocityY(0f);
+        }
         float direction = player.isFacingRight() ? 1.0f : -1.0f;
         player.setVelocityX(direction * dashSpeed);
         player.getAttributes().notifyCombatLog(isMonkDashUpgraded ?
@@ -32,6 +35,9 @@ public class DashState implements PlayerState {
     @Override
     public void update(Player player, float delta) {
         timer += delta;
+        if (isMonkDashUpgraded) {
+            player.setVelocityY(0f);
+        }
         float direction = player.isFacingRight() ? 1.0f : -1.0f;
         player.setVelocityX(direction * dashSpeed * (1.0f - (timer / duration) * 0.4f));
 

@@ -13,7 +13,7 @@ public class SpearAttackStrategy implements AttackStrategy {
     private final AttackData L1 = new AttackData("Spear L1 (Quick Poke)", false, 1.1f, 10f, 0.05f, 0.10f, 0.16f, 75f, 24f, false);
     private final AttackData L2 = new AttackData("Spear L2 (Double Jab)", false, 1.35f, 12f, 0.06f, 0.12f, 0.18f, 82f, 26f, false);
     private final AttackData L3 = new AttackData("Spear L3 (Deep Thrust)", false, 1.75f, 16f, 0.08f, 0.14f, 0.24f, 92f, 28f, false);
-    private final AttackData H1 = new AttackData("Spear H1 (Sweeping Halberd)", true, 1.90f, 24f, 0.16f, 0.18f, 0.42f, 65f, 44f, false);
+    private final AttackData H1 = new AttackData("Spear H1 (Sweeping Halberd)", true, 1.90f, 24f, 0.16f, 0.18f, 0.42f, 65f, 44f, true);
     private final AttackData H2 = new AttackData("Spear H2 (Drilling Lunge)", true, 2.50f, 28f, 0.18f, 0.20f, 0.48f, 105f, 30f, true);
 
     @Override

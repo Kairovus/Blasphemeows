@@ -7,6 +7,7 @@ import com.Blasphemeows.core.GameManager;
 import com.Blasphemeows.enemy.Enemy;
 import com.Blasphemeows.model.PlayerAttributes;
 import com.Blasphemeows.state.AttackState;
+import com.Blasphemeows.state.ComboRecoveryState;
 import com.Blasphemeows.state.DashState;
 import com.Blasphemeows.state.IdleState;
 import com.Blasphemeows.state.JumpState;
@@ -36,7 +37,7 @@ public class Player {
     private boolean grounded = true;
     private boolean droppingThroughPlatform = false;
     private float dropThroughTimer = 0f;
-    private float moveSpeed = 160f;
+    private float moveSpeed = 205f;
     private float jumpVelocity = 440f;
     private float gravity = -950f;
 
@@ -61,8 +62,11 @@ public class Player {
         stateMachine.update(delta);
         comboManager.update(delta, this);
 
-        // Apply gravity if not executing Seismic Slam (which governs its own vertical trajectory)
-        if (!(stateMachine.getCurrentState() instanceof SeismicSlamState)) {
+        // Apply gravity unless executing Seismic Slam or hovering during Monk Dash
+        boolean suppressGravity = stateMachine.getCurrentState() instanceof SeismicSlamState
+                || (stateMachine.getCurrentState() instanceof DashState
+                    && ((DashState) stateMachine.getCurrentState()).isMonkDashUpgraded());
+        if (!suppressGravity) {
             if (y > groundY) {
                 velocityY += gravity * delta;
                 grounded = false;
@@ -127,6 +131,7 @@ public class Player {
         // Cannot move while rooted, attacking, or dashing
         if (stateMachine.getCurrentState() instanceof RootedState
                 || stateMachine.getCurrentState() instanceof AttackState
+                || stateMachine.getCurrentState() instanceof ComboRecoveryState
                 || stateMachine.getCurrentState() instanceof DashState
                 || stateMachine.getCurrentState() instanceof SeismicSlamState) {
             return;
@@ -149,7 +154,8 @@ public class Player {
     }
 
     public void performLightAttack() {
-        if (attributes.isDead() || stateMachine.getCurrentState() instanceof RootedState
+        if (attributes.isDead() || stateMachine.getCurrentState() instanceof ComboRecoveryState
+                || stateMachine.getCurrentState() instanceof RootedState
                 || stateMachine.getCurrentState() instanceof DashState
                 || stateMachine.getCurrentState() instanceof SeismicSlamState) {
             return;
@@ -160,7 +166,8 @@ public class Player {
     }
 
     public void performHeavyAttack() {
-        if (attributes.isDead() || stateMachine.getCurrentState() instanceof RootedState
+        if (attributes.isDead() || stateMachine.getCurrentState() instanceof ComboRecoveryState
+                || stateMachine.getCurrentState() instanceof RootedState
                 || stateMachine.getCurrentState() instanceof DashState
                 || stateMachine.getCurrentState() instanceof SeismicSlamState) {
             return;
@@ -171,6 +178,7 @@ public class Player {
     }
 
     public void dropThroughPlatform() {
+        if (stateMachine.getCurrentState() instanceof ComboRecoveryState) return;
         // Can only drop through if currently above the base world ground
         if (y > groundY + 4f && grounded) {
             droppingThroughPlatform = true;
@@ -254,6 +262,7 @@ public class Player {
 
     public void applyRootTrap() {
         if (!invincible && !(stateMachine.getCurrentState() instanceof RootedState)) {
+            comboManager.resetCombo();
             stateMachine.changeState(new RootedState());
         }
     }
@@ -290,6 +299,7 @@ public class Player {
                 && !(stateMachine.getCurrentState() instanceof DashState)
                 && !(stateMachine.getCurrentState() instanceof SeismicSlamState)
                 && !(stateMachine.getCurrentState() instanceof AttackState)
+                && !(stateMachine.getCurrentState() instanceof ComboRecoveryState)
                 && !attributes.isDead();
     }
 

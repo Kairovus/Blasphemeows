@@ -1,6 +1,7 @@
 package com.Blasphemeows.enemy;
 
 import com.Blasphemeows.player.Player;
+import com.Blasphemeows.score.EnemyScoreType;
 
 /**
  * Base abstract class for all Enemies.
@@ -20,6 +21,7 @@ public abstract class Enemy {
     protected int maxHp;
     protected float moveSpeed;
     protected int xpReward = 3; // Regular enemy awards 3 XP by default
+    protected EnemyScoreType scoreType = EnemyScoreType.NORMAL_REGIONAL;
 
     // Defense and stun mechanics
     protected boolean hasFrontShield = false;
@@ -32,6 +34,7 @@ public abstract class Enemy {
 
     // Active attack hitbox / danger zone
     protected com.Blasphemeows.combat.Hitbox currentAttackHitbox = null;
+    protected boolean telegraphingAttack;
 
     public Enemy(String name, float x, float y, float width, float height, int maxHp, float moveSpeed) {
         this.name = name;
@@ -65,6 +68,7 @@ public abstract class Enemy {
         this.stunTimer = Math.max(this.stunTimer, duration);
         this.velocityX = 0f;
         this.velocityY = 0f;
+        this.telegraphingAttack = false;
         System.out.println("[Enemy] " + name + " STUNNED for " + duration + "s!");
     }
 
@@ -138,7 +142,9 @@ public abstract class Enemy {
     public boolean hasFrontShield() { return hasFrontShield; }
     public boolean isVulnerableWindow() { return isVulnerableWindow; }
     public boolean isFrozen() { return isFrozen; }
+    public boolean isTelegraphingAttack() { return telegraphingAttack; }
     public int getXpReward() { return xpReward; }
+    public EnemyScoreType getScoreType() { return scoreType; }
 
     public com.Blasphemeows.combat.Hitbox getCurrentAttackHitbox() {
         return currentAttackHitbox;

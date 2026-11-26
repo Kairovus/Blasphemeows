@@ -23,6 +23,7 @@ public class ShieldBulwark extends Enemy {
         super("Shield Bulwark", x, y, 44f, 56f, 180, 50f);
         this.hasFrontShield = true;
         this.xpReward = 5; // Special enemy reward
+        this.scoreType = com.Blasphemeows.score.EnemyScoreType.SPECIAL_REGIONAL;
     }
 
     @Override
@@ -33,6 +34,7 @@ public class ShieldBulwark extends Enemy {
         // If stunned or frozen, vulnerability window and shield are deactivated for free damage!
         if (isStunnedOrFrozen()) {
             isVulnerableWindow = false;
+            telegraphingAttack = false;
             phase = ActionPhase.GUARDING;
             phaseTimer = 0f;
             clearAttackHitbox();
@@ -106,6 +108,7 @@ public class ShieldBulwark extends Enemy {
                 }
                 break;
         }
+        telegraphingAttack = phase == ActionPhase.WINDUP;
     }
 
     public boolean isInVulnerableWindow() {

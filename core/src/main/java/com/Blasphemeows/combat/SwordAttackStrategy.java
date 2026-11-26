@@ -18,7 +18,7 @@ public class SwordAttackStrategy implements AttackStrategy {
     private final AttackData L2 = new AttackData("Sword L2 (Cross Cut)", false, 1.25f, 12f, 0.05f, 0.12f, 0.14f, 48f, 38f, false);
     private final AttackData L3 = new AttackData("Sword L3 (Spin Finisher)", false, 1.70f, 16f, 0.08f, 0.16f, 0.22f, 56f, 42f, false);
 
-    private final AttackData H1 = new AttackData("Sword H1 (Heavy Cleave)", true, 1.85f, 22f, 0.15f, 0.18f, 0.40f, 52f, 46f, false);
+    private final AttackData H1 = new AttackData("Sword H1 (Heavy Cleave)", true, 1.85f, 22f, 0.15f, 0.18f, 0.40f, 52f, 46f, true);
     private final AttackData H2 = new AttackData("Sword H2 (Ground Breaker)", true, 2.70f, 30f, 0.22f, 0.20f, 0.55f, 60f, 52f, true);
 
     private final AttackData LLH = new AttackData("Sword LLH (Piercing Thrust)", true, 2.30f, 26f, 0.12f, 0.18f, 0.44f, 70f, 32f, true);
@@ -118,7 +118,10 @@ public class SwordAttackStrategy implements AttackStrategy {
         );
 
         player.getComboManager().recordAttack(inputType);
-        player.getStateMachine().changeState(new AttackState(attack, hitbox, dex));
+        List<Character> route = player.getComboManager().getCurrentSequence();
+        boolean finisher = (route.size() == 3 && route.get(0) == 'L' && route.get(1) == 'L')
+                || (route.size() == 2 && route.get(0) == 'H' && route.get(1) == 'H');
+        player.getStateMachine().changeState(new AttackState(attack, hitbox, dex, finisher));
         player.getAttributes().notifyCombatLog("🗡️ [" + player.getComboManager().getSequenceString() + "] " +
                 attack.getName() + " -> " + (int) finalDmg + " dmg!");
     }

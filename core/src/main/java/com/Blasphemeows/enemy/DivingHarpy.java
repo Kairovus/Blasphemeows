@@ -7,23 +7,26 @@ import com.Blasphemeows.player.Player;
  * DivingHarpy: Hovers in the sky, tracks player, and dashes directly downward at high speed.
  */
 public class DivingHarpy extends Enemy {
-    private enum State { HOVER, DIVE, RECOVER }
+    private enum State { HOVER, WINDUP, DIVE, RECOVER }
     private State state = State.HOVER;
     private float stateTimer = 0f;
     private float targetX;
     private float targetY;
+    private boolean hasHitPlayer;
     private final float hoverAltitude = 120f;
 
     public DivingHarpy(float x, float y) {
         super("Diving Harpy", x, y + 120f, 36f, 36f, 65, 85f);
         this.y = y + hoverAltitude;
         this.xpReward = 5; // Special enemy reward
+        this.scoreType = com.Blasphemeows.score.EnemyScoreType.SPECIAL_REGIONAL;
     }
 
     @Override
     public void update(float delta, Player player) {
         updateStatusEffects(delta);
         if (isStunnedOrFrozen() || !isAlive() || player == null) {
+            telegraphingAttack = false;
             // If stunned or frozen, fall to ground
             if (isStunnedOrFrozen() && y > 0) {
                 y = Math.max(0, y - 200f * delta);
@@ -42,11 +45,21 @@ public class DivingHarpy extends Enemy {
                 y = hoverAltitude + (float) Math.sin(stateTimer * 4f) * 15f;
 
                 if (stateTimer >= 2.5f) {
-                    state = State.DIVE;
+                    state = State.WINDUP;
                     stateTimer = 0f;
                     targetX = player.getX();
                     targetY = player.getY();
-                    System.out.println("🦅 [Diving Harpy] Shrieks and swoops down directly at the player!");
+                    hasHitPlayer = false;
+                    telegraphingAttack = true;
+                    System.out.println("🦅 [Diving Harpy] Locks onto the player before diving!");
+                }
+                break;
+
+            case WINDUP:
+                if (stateTimer >= 0.55f) {
+                    state = State.DIVE;
+                    stateTimer = 0f;
+                    telegraphingAttack = false;
                 }
                 break;
 
@@ -61,12 +74,14 @@ public class DivingHarpy extends Enemy {
                     y += (dy / dist) * 360f * delta;
 
                     // Contact damage during dive
-                    if (Math.abs(player.getX() - x) < 32f && Math.abs(player.getY() - y) < 32f) {
+                    if (!hasHitPlayer && Math.abs(player.getX() - x) < 32f && Math.abs(player.getY() - y) < 32f) {
                         player.takeDamage(18);
+                        hasHitPlayer = true;
                     }
                 } else {
                     state = State.RECOVER;
                     stateTimer = 0f;
+                    telegraphingAttack = false;
                 }
                 break;
 

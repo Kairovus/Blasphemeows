@@ -8,6 +8,7 @@ import com.Blasphemeows.player.Player;
  */
 public class ShurikenNinja extends Enemy {
     private float throwTimer = 0f;
+    private float throwWindup = 0f;
     private final float throwInterval = 2.0f;
     private float escapeDashTimer = 0f;
 
@@ -18,7 +19,10 @@ public class ShurikenNinja extends Enemy {
     @Override
     public void update(float delta, Player player) {
         updateStatusEffects(delta);
-        if (isStunnedOrFrozen() || !isAlive() || player == null) return;
+        if (isStunnedOrFrozen() || !isAlive() || player == null) {
+            telegraphingAttack = false;
+            return;
+        }
 
         facingRight = player.getX() > x;
         float distToPlayer = Math.abs(player.getX() - x);
@@ -40,8 +44,11 @@ public class ShurikenNinja extends Enemy {
         }
 
         // Throw shuriken
-        throwTimer += delta;
-        if (throwTimer >= throwInterval) {
+        if (telegraphingAttack) {
+            throwWindup += delta;
+            if (throwWindup < 0.4f) return;
+            telegraphingAttack = false;
+            throwWindup = 0f;
             throwTimer = 0f;
             float spawnX = facingRight ? (x + width) : (x - 14f);
             float vx = facingRight ? 290f : -290f;
@@ -49,6 +56,12 @@ public class ShurikenNinja extends Enemy {
                     spawnX, y + 20f, vx, 0f, 12f, 2.5f, true, com.Blasphemeows.combat.Projectile.Type.SHURIKEN
             ));
             System.out.println("🗡️ [Shuriken Ninja] Threw a razor shuriken projectile!");
+            return;
+        }
+        throwTimer += delta;
+        if (throwTimer >= throwInterval) {
+            telegraphingAttack = true;
+            throwWindup = 0f;
         }
     }
 }

@@ -11,6 +11,7 @@ import java.util.List;
  */
 public class SporeSummoner extends Enemy {
     private float summonTimer = 0f;
+    private float summonWindup;
     private final float summonInterval = 5.0f;
     private final List<SporeMinion> spawnedMinions = new ArrayList<SporeMinion>();
 
@@ -34,10 +35,20 @@ public class SporeSummoner extends Enemy {
             x += (facingRight ? -1f : 1f) * moveSpeed * delta;
         }
 
-        summonTimer += delta;
-        if (summonTimer >= summonInterval) {
-            summonTimer = 0f;
-            spawnMinion();
+        if (telegraphingAttack) {
+            summonWindup += delta;
+            if (summonWindup >= 0.65f) {
+                telegraphingAttack = false;
+                summonWindup = 0f;
+                summonTimer = 0f;
+                spawnMinion();
+            }
+        } else {
+            summonTimer += delta;
+            if (summonTimer >= summonInterval) {
+                telegraphingAttack = true;
+                summonWindup = 0f;
+            }
         }
 
         updateMinions(delta, player);
@@ -56,6 +67,7 @@ public class SporeSummoner extends Enemy {
             SporeMinion minion = spawnedMinions.get(i);
             minion.update(delta, player);
             if (!minion.isAlive()) {
+                com.Blasphemeows.score.ScoreTracker.getInstance().addKill(minion);
                 spawnedMinions.remove(i);
             }
         }

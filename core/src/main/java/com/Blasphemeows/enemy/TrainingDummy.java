@@ -19,11 +19,13 @@ public class TrainingDummy extends Enemy {
     public TrainingDummy(float x, float y) {
         super("Target Practice Golem", x, y, 40f, 56f, 600, 0f);
         this.xpReward = 0; // Practice dummy yields no XP
+        this.scoreType = com.Blasphemeows.score.EnemyScoreType.NONE;
     }
 
     public void toggleMode() {
         this.aggressiveMode = !this.aggressiveMode;
         this.isWindingUp = false;
+        this.telegraphingAttack = false;
         this.attackTimer = 0f;
         this.windupTimer = 0f;
         clearAttackHitbox();
@@ -50,6 +52,7 @@ public class TrainingDummy extends Enemy {
             float distToPlayer = Math.abs(player.getX() - x);
 
             if (isWindingUp) {
+                telegraphingAttack = true;
                 windupTimer += delta;
                 isVulnerableWindow = true; // Can be stunned by heavy attack during windup!
 
@@ -82,11 +85,13 @@ public class TrainingDummy extends Enemy {
             if (attackTimer >= 2.5f && distToPlayer < 90f) {
                 attackTimer = 0f;
                 isWindingUp = true;
+                telegraphingAttack = true;
                 windupTimer = 0f;
                 System.out.println("⚠️ [Practice Golem] Winding up practice strike! (Dodge now!)");
             }
         } else {
             isWindingUp = false;
+            telegraphingAttack = false;
             isVulnerableWindow = false;
             clearAttackHitbox();
         }

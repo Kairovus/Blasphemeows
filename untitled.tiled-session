@@ -1,0 +1,72 @@
+{
+    "activeFile": "assets/maps/main_hub.tmx",
+    "expandedProjectPaths": [
+        "assets/tilesets",
+        ".",
+        "assets/maps",
+        "assets"
+    ],
+    "fileStates": {
+        "assets/maps/main_hub.tmx": {
+            "expandedObjectLayers": [
+                8,
+                5
+            ],
+            "scale": 0.5,
+            "selectedLayer": 4,
+            "viewCenter": {
+                "x": 1336,
+                "y": -12
+            }
+        },
+        "assets/maps/main_hub_rev.tmx": {
+            "scale": 0.5,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 376,
+                "y": 514
+            }
+        },
+        "assets/maps/untitled.tmx": {
+            "scale": 1.0433035714285714,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 559.760376551134,
+                "y": 320.1369276850663
+            }
+        },
+        "assets/tilesets/BasicTiles.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "assets/tilesets/blasphemeows_solid_tileset.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        }
+    },
+    "last.externalTilesetPath": "D:/Sekola/UIsemester3/OOP/finpro/assets/tilesets",
+    "last.imagePath": "D:/Download",
+    "map.height": 60,
+    "map.lastUsedFormat": "tmx",
+    "map.tileHeight": 16,
+    "map.tileWidth": 16,
+    "map.width": 70,
+    "openFiles": [
+        "assets/maps/main_hub.tmx"
+    ],
+    "project": "untitled.tiled-project",
+    "property.type": "string",
+    "recentFiles": [
+        "assets/tilesets/blasphemeows_solid_tileset.tsx",
+        "assets/tilesets/BasicTiles.tsx",
+        "assets/maps/main_hub_rev.tmx",
+        "assets/maps/main_hub.tmx",
+        "assets/maps/untitled.tmx"
+    ],
+    "tileset.lastUsedFilter": "Tiled tileset files (*.tsx *.xml)",
+    "tileset.lastUsedFormat": "tsx",
+    "tileset.tileSize": {
+        "height": 16,
+        "width": 16
+    }
+}

@@ -17,13 +17,19 @@ public class AttackState implements PlayerState {
     private final AttackData attackData;
     private final Hitbox hitbox;
     private final float totalDuration;
+    private final boolean comboFinisher;
     private float timer = 0f;
     private boolean chained = false;
 
     public AttackState(AttackData attackData, Hitbox hitbox, int dexterity) {
+        this(attackData, hitbox, dexterity, false);
+    }
+
+    public AttackState(AttackData attackData, Hitbox hitbox, int dexterity, boolean comboFinisher) {
         this.attackData = attackData;
         this.hitbox = hitbox;
         this.totalDuration = attackData.getTotalDuration(dexterity);
+        this.comboFinisher = comboFinisher;
     }
 
     @Override
@@ -59,6 +65,13 @@ public class AttackState implements PlayerState {
             return;
         }
 
+        if (comboFinisher && timer >= attackData.getStartupDuration() + attackData.getActiveDuration()) {
+            if (hitbox != null) hitbox.deactivate();
+            player.getStateMachine().changeState(new ComboRecoveryState(attackData.getAdjustedRecovery(
+                    player.getAttributes().getDexterity())));
+            return;
+        }
+
         if (timer >= totalDuration) {
             player.getStateMachine().changeState(new IdleState());
         }
@@ -69,7 +82,7 @@ public class AttackState implements PlayerState {
      * of a combo chain the moment startup completes and active damage frames begin.
      */
     public boolean canCancelIntoCombo() {
-        return timer >= attackData.getStartupDuration();
+        return !comboFinisher && timer >= attackData.getStartupDuration();
     }
 
     /**

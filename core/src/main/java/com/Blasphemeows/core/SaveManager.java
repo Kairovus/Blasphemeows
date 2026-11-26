@@ -2,6 +2,7 @@ package com.Blasphemeows.core;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
+import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.utils.Json;
 import com.badlogic.gdx.utils.JsonWriter;
 import com.Blasphemeows.combat.GreatswordAttackStrategy;
@@ -12,12 +13,13 @@ import com.Blasphemeows.player.Player;
 
 /**
  * Singleton Pattern: SaveManager
- * Manages JSON persistence and loading for player progression, checkpoints, and attributes.
- * Uses libGDX's local FileHandle system to ensure cross-platform compatibility.
+ * Manages per-user local progression using the platform's preferences store.
  */
 public class SaveManager {
     private static volatile SaveManager instance;
-    private static final String SAVE_FILE_NAME = "blasphemeows_save.json";
+    private static final String PREFERENCES_NAME = "com.blasphemeows.game.save";
+    private static final String SAVE_KEY = "saveData";
+    private static final String LEGACY_SAVE_FILE_NAME = "blasphemeows_save.json";
 
     private SaveData currentSaveData = new SaveData();
     private final Json json = new Json(JsonWriter.OutputType.json);
@@ -70,17 +72,18 @@ public class SaveManager {
                 currentSaveData.completedRegions.add(reg.name());
             }
 
-            // Persist checkpoint info
-            if (checkpoint != null) {
+            // Persist regional checkpoint info (Main Hub checkpoint must not overwrite regional history)
+            if (checkpoint != null && checkpoint.getRegion() != GameManager.Region.TUTORIAL_HUB) {
                 currentSaveData.lastCheckpointId = checkpoint.getId();
                 currentSaveData.lastCheckpointRegion = checkpoint.getRegion().name();
-                currentSaveData.respawnX = checkpoint.getX() + 20f;
-                currentSaveData.respawnY = checkpoint.getY();
+                currentSaveData.respawnX = checkpoint.getRespawnX();
+                currentSaveData.respawnY = checkpoint.getRespawnY();
             }
 
-            FileHandle file = Gdx.files.local(SAVE_FILE_NAME);
-            file.writeString(json.prettyPrint(currentSaveData), false);
-            System.out.println("[SaveManager] Progression saved successfully to " + SAVE_FILE_NAME);
+            Preferences preferences = Gdx.app.getPreferences(PREFERENCES_NAME);
+            preferences.putString(SAVE_KEY, json.toJson(currentSaveData));
+            preferences.flush();
+            System.out.println("[SaveManager] Progression saved to local user preferences.");
             return true;
         } catch (Exception e) {
             System.err.println("[SaveManager] Failed to save game progression: " + e.getMessage());
@@ -92,13 +95,16 @@ public class SaveManager {
         if (player == null) return false;
 
         try {
-            FileHandle file = Gdx.files.local(SAVE_FILE_NAME);
-            if (!file.exists()) {
-                System.out.println("[SaveManager] No existing save file found. Starting fresh.");
-                return false;
+            Preferences preferences = Gdx.app.getPreferences(PREFERENCES_NAME);
+            String content = preferences.getString(SAVE_KEY, null);
+            if (content == null || content.trim().isEmpty()) {
+                content = readLegacySave();
+                if (content == null) {
+                    currentSaveData = new SaveData();
+                    System.out.println("[SaveManager] No existing save found. Starting fresh.");
+                    return false;
+                }
             }
-
-            String content = file.readString();
             currentSaveData = json.fromJson(SaveData.class, content);
             if (currentSaveData == null) {
                 currentSaveData = new SaveData();
@@ -141,17 +147,33 @@ public class SaveManager {
                 } catch (IllegalArgumentException ignored) {}
             }
 
+            // Import legacy JSON once so this user's existing progression is preserved.
+            if (!preferences.contains(SAVE_KEY)) {
+                preferences.putString(SAVE_KEY, json.toJson(currentSaveData));
+                preferences.flush();
+            }
+
             System.out.println("[SaveManager] Game progression loaded successfully! Level " + currentSaveData.level);
             return true;
         } catch (Exception e) {
-            System.err.println("[SaveManager] Corrupted or invalid save file. Starting with default stats. Error: " + e.getMessage());
+            System.err.println("[SaveManager] Corrupted or invalid save. Starting with default stats. Error: " + e.getMessage());
             currentSaveData = new SaveData();
             return false;
         }
     }
 
     public boolean hasSaveFile() {
-        return Gdx.files.local(SAVE_FILE_NAME).exists();
+        return Gdx.app.getPreferences(PREFERENCES_NAME).contains(SAVE_KEY)
+                || readLegacySave() != null;
+    }
+
+    private String readLegacySave() {
+        FileHandle legacyFile = Gdx.files.local(LEGACY_SAVE_FILE_NAME);
+        if (legacyFile.exists()) return legacyFile.readString();
+
+        // The Gradle desktop run task starts in assets/, while older launches may have saved at the project root.
+        FileHandle projectRootSave = Gdx.files.local("../" + LEGACY_SAVE_FILE_NAME);
+        return projectRootSave.exists() ? projectRootSave.readString() : null;
     }
 
     public SaveData getCurrentSaveData() {

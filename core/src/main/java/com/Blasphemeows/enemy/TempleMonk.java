@@ -12,6 +12,11 @@ public class TempleMonk extends Enemy {
     private boolean isDashing = false;
     private float dashDuration = 0.25f;
     private float currentDashTime = 0f;
+    private boolean preparingDash;
+    private float dashWindup;
+    private boolean hasHitPlayer;
+    private float meleeTimer;
+    private float meleeWindup;
 
     public TempleMonk(float x, float y) {
         super("Temple Monk", x, y, 32f, 48f, 65, 110f);
@@ -22,12 +27,48 @@ public class TempleMonk extends Enemy {
         updateStatusEffects(delta);
         if (isStunnedOrFrozen() || !isAlive() || player == null) {
             isDashing = false;
+            preparingDash = false;
+            telegraphingAttack = false;
             clearAttackHitbox();
             return;
         }
 
         facingRight = player.getX() > x;
         float distToPlayer = Math.abs(player.getX() - x);
+
+        if (preparingDash) {
+            telegraphingAttack = true;
+            dashWindup += delta;
+            if (dashWindup >= 0.45f) {
+                preparingDash = false;
+                isDashing = true;
+                currentDashTime = 0f;
+                hasHitPlayer = false;
+                telegraphingAttack = false;
+            }
+            return;
+        }
+
+        if (!isDashing && distToPlayer <= 40f) {
+            meleeTimer += delta;
+            if (meleeTimer >= 1.2f) {
+                if (meleeWindup == 0f) telegraphingAttack = true;
+                meleeWindup += delta;
+                if (meleeWindup >= 0.4f) {
+                    if (Math.abs(player.getY() - y) < 40f) player.takeDamage(10);
+                    meleeTimer = 0f;
+                    meleeWindup = 0f;
+                    telegraphingAttack = false;
+                    System.out.println("👊 [Temple Monk] Landed a monastery strike!");
+                }
+            }
+            return;
+        }
+
+        if (meleeWindup > 0f) {
+            meleeWindup = 0f;
+            telegraphingAttack = false;
+        }
 
         if (isDashing) {
             currentDashTime += delta;
@@ -45,12 +86,14 @@ public class TempleMonk extends Enemy {
             }
 
             // Deal contact damage on dash
-            if (distToPlayer < 36f && Math.abs(player.getY() - y) < 40f) {
+            if (!hasHitPlayer && distToPlayer < 36f && Math.abs(player.getY() - y) < 40f) {
                 player.takeDamage(14);
+                hasHitPlayer = true;
             }
 
             if (currentDashTime >= dashDuration) {
                 isDashing = false;
+                telegraphingAttack = false;
                 dashTimer = 0f;
                 clearAttackHitbox();
             }
@@ -59,9 +102,9 @@ public class TempleMonk extends Enemy {
 
         dashTimer += delta;
         if (dashTimer >= dashCooldown && distToPlayer < 240f && distToPlayer > 50f) {
-            // Trigger rapid martial arts dash towards player
-            isDashing = true;
-            currentDashTime = 0f;
+            preparingDash = true;
+            dashWindup = 0f;
+            telegraphingAttack = true;
             System.out.println("🥋 [Temple Monk] Palm Dash towards player!");
             return;
         }
@@ -69,14 +112,6 @@ public class TempleMonk extends Enemy {
         // Standard movement towards player
         if (distToPlayer > 40f) {
             x += (facingRight ? 1f : -1f) * moveSpeed * delta;
-        } else {
-            // Normal melee punch
-            dashTimer += delta;
-            if (dashTimer >= 1.2f) {
-                dashTimer = 0f;
-                player.takeDamage(10);
-                System.out.println("👊 [Temple Monk] Landed a monastery strike!");
-            }
         }
     }
 }

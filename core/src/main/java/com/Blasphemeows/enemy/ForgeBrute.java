@@ -21,6 +21,7 @@ public class ForgeBrute extends Enemy {
         updateStatusEffects(delta);
         if (isStunnedOrFrozen() || !isAlive() || player == null) {
             isWindingUp = false;
+            telegraphingAttack = false;
             clearAttackHitbox();
             return;
         }
@@ -29,6 +30,7 @@ public class ForgeBrute extends Enemy {
         float distToPlayer = Math.abs(player.getX() - x);
 
         if (isWindingUp) {
+            telegraphingAttack = true;
             windupTimer += delta;
 
             if (currentAttackHitbox == null || currentAttackHitbox.isFinished()) {
@@ -45,6 +47,7 @@ public class ForgeBrute extends Enemy {
             // Visual telegraph: heavy hammer raised
             if (windupTimer >= 0.8f) {
                 isWindingUp = false;
+                telegraphingAttack = false;
                 windupTimer = 0f;
                 // Deliver hammer smash
                 if (distToPlayer < 70f && Math.abs(player.getY() - y) < 40f) {
@@ -60,6 +63,7 @@ public class ForgeBrute extends Enemy {
         if (distToPlayer < 60f && swingTimer >= swingCooldown) {
             swingTimer = 0f;
             isWindingUp = true;
+            telegraphingAttack = true;
             windupTimer = 0f;
             System.out.println("⚠️ [Forge Brute] Raising heavy forge hammer (windup)...");
             return;

@@ -8,6 +8,7 @@ import com.Blasphemeows.player.Player;
  */
 public class SlagHurler extends Enemy {
     private float tossTimer = 0f;
+    private float tossWindup = 0f;
     private final float tossInterval = 3.2f;
 
     public SlagHurler(float x, float y) {
@@ -17,7 +18,10 @@ public class SlagHurler extends Enemy {
     @Override
     public void update(float delta, Player player) {
         updateStatusEffects(delta);
-        if (isStunnedOrFrozen() || !isAlive() || player == null) return;
+        if (isStunnedOrFrozen() || !isAlive() || player == null) {
+            telegraphingAttack = false;
+            return;
+        }
 
         facingRight = player.getX() > x;
         float distToPlayer = Math.abs(player.getX() - x);
@@ -29,8 +33,11 @@ public class SlagHurler extends Enemy {
             x += (facingRight ? 1f : -1f) * moveSpeed * delta;
         }
 
-        tossTimer += delta;
-        if (tossTimer >= tossInterval) {
+        if (telegraphingAttack) {
+            tossWindup += delta;
+            if (tossWindup < 0.55f) return;
+            telegraphingAttack = false;
+            tossWindup = 0f;
             tossTimer = 0f;
             float spawnX = facingRight ? (x + width) : (x - 18f);
             float vx = (player.getX() - x) * 1.15f;
@@ -39,6 +46,12 @@ public class SlagHurler extends Enemy {
                     spawnX, y + 30f, vx, vy, 22f, 3.0f, true, com.Blasphemeows.combat.Projectile.Type.MOLTEN_SLAG
             ));
             System.out.println("🔥 [Slag Hurler] Hurled an arcing glob of molten slag!");
+            return;
+        }
+        tossTimer += delta;
+        if (tossTimer >= tossInterval) {
+            telegraphingAttack = true;
+            tossWindup = 0f;
         }
     }
 }
