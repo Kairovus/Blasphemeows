@@ -338,6 +338,9 @@ public class Player {
         this.velocityX = 0f;
         this.velocityY = 0f;
         this.grounded = true;
+        this.invincible = false;
+        this.droppingThroughPlatform = false;
+        this.dropThroughTimer = 0f;
         this.attributes.restoreFullHealthAndStamina();
         this.stateMachine.changeState(new IdleState());
         this.activeHitboxes.clear();

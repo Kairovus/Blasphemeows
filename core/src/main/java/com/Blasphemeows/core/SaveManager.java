@@ -111,15 +111,15 @@ public class SaveManager {
                 return false;
             }
 
-            // Apply attributes
+            // Apply attributes (clamped against corrupted/outdated values)
             PlayerAttributes attr = player.getAttributes();
-            attr.setLevel(currentSaveData.level);
-            attr.setCurrentXP(currentSaveData.currentXP);
-            attr.setAttributePoints(currentSaveData.attributePoints);
-            attr.setVitality(currentSaveData.vitality);
-            attr.setStrength(currentSaveData.strength);
-            attr.setEndurance(currentSaveData.endurance);
-            attr.setDexterity(currentSaveData.dexterity);
+            attr.setLevel(Math.max(1, currentSaveData.level));
+            attr.setCurrentXP(Math.max(0, currentSaveData.currentXP));
+            attr.setAttributePoints(Math.max(0, currentSaveData.attributePoints));
+            attr.setVitality(Math.max(1, currentSaveData.vitality));
+            attr.setStrength(Math.max(1, currentSaveData.strength));
+            attr.setEndurance(Math.max(1, currentSaveData.endurance));
+            attr.setDexterity(Math.max(1, currentSaveData.dexterity));
             attr.restoreFullHealthAndStamina();
             attr.notifyLevelChanged();
 
@@ -132,19 +132,25 @@ public class SaveManager {
                 player.setWeapon(new SwordAttackStrategy());
             }
 
-            // Apply abilities
+            // Apply abilities and completed regions cleanly
             GameManager gm = GameManager.getInstance();
-            for (String abName : currentSaveData.unlockedAbilities) {
-                try {
-                    gm.unlockAbility(GameManager.Ability.valueOf(abName));
-                } catch (IllegalArgumentException ignored) {}
+            gm.resetProgress();
+            if (currentSaveData.unlockedAbilities != null) {
+                for (String abName : currentSaveData.unlockedAbilities) {
+                    if (abName == null) continue;
+                    try {
+                        gm.unlockAbility(GameManager.Ability.valueOf(abName));
+                    } catch (IllegalArgumentException ignored) {}
+                }
             }
 
-            // Apply completed regions
-            for (String regName : currentSaveData.completedRegions) {
-                try {
-                    gm.completeRegion(GameManager.Region.valueOf(regName));
-                } catch (IllegalArgumentException ignored) {}
+            if (currentSaveData.completedRegions != null) {
+                for (String regName : currentSaveData.completedRegions) {
+                    if (regName == null) continue;
+                    try {
+                        gm.completeRegion(GameManager.Region.valueOf(regName));
+                    } catch (IllegalArgumentException ignored) {}
+                }
             }
 
             // Import legacy JSON once so this user's existing progression is preserved.
@@ -162,9 +168,44 @@ public class SaveManager {
         }
     }
 
-    public boolean hasSaveFile() {
-        return Gdx.app.getPreferences(PREFERENCES_NAME).contains(SAVE_KEY)
-                || readLegacySave() != null;
+    public synchronized boolean hasSaveFile() {
+        if (Gdx.app == null) {
+            return false;
+        }
+        try {
+            Preferences preferences = Gdx.app.getPreferences(PREFERENCES_NAME);
+            String content = preferences.getString(SAVE_KEY, null);
+            if (content == null || content.trim().isEmpty()) {
+                content = readLegacySave();
+            }
+            if (content == null || content.trim().isEmpty()) {
+                return false;
+            }
+            SaveData parsed = json.fromJson(SaveData.class, content);
+            return parsed != null && parsed.level >= 1;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /** Clears local campaign progression (used only on explicit New Game confirmation). */
+    public synchronized void clearSave() {
+        currentSaveData = new SaveData();
+        if (Gdx.app == null) {
+            return;
+        }
+        Preferences preferences = Gdx.app.getPreferences(PREFERENCES_NAME);
+        preferences.remove(SAVE_KEY);
+        preferences.flush();
+
+        FileHandle legacyFile = Gdx.files.local(LEGACY_SAVE_FILE_NAME);
+        if (legacyFile.exists()) {
+            legacyFile.delete();
+        }
+        FileHandle projectRootSave = Gdx.files.local("../" + LEGACY_SAVE_FILE_NAME);
+        if (projectRootSave.exists()) {
+            projectRootSave.delete();
+        }
     }
 
     private String readLegacySave() {

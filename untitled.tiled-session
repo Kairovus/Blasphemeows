@@ -2,21 +2,23 @@
     "activeFile": "assets/maps/main_hub.tmx",
     "expandedProjectPaths": [
         "assets/tilesets",
+        "assets",
         ".",
-        "assets/maps",
-        "assets"
+        "assets/maps"
     ],
     "fileStates": {
         "assets/maps/main_hub.tmx": {
             "expandedObjectLayers": [
+                7,
+                6,
                 8,
                 5
             ],
             "scale": 0.5,
             "selectedLayer": 4,
             "viewCenter": {
-                "x": 1336,
-                "y": -12
+                "x": 1018,
+                "y": 542
             }
         },
         "assets/maps/main_hub_rev.tmx": {
@@ -57,10 +59,10 @@
     "project": "untitled.tiled-project",
     "property.type": "string",
     "recentFiles": [
+        "assets/maps/main_hub.tmx",
         "assets/tilesets/blasphemeows_solid_tileset.tsx",
         "assets/tilesets/BasicTiles.tsx",
         "assets/maps/main_hub_rev.tmx",
-        "assets/maps/main_hub.tmx",
         "assets/maps/untitled.tmx"
     ],
     "tileset.lastUsedFilter": "Tiled tileset files (*.tsx *.xml)",
