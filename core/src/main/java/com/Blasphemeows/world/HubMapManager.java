@@ -40,7 +40,7 @@ public class HubMapManager implements Disposable {
     private static final float FALL_RESCUE_MARGIN = 80f;
 
     private final TiledMap tiledMap;
-    private final OrthogonalTiledMapRenderer mapRenderer;
+        private final OrthogonalTiledMapRenderer mapRenderer;
     private final float mapWidth;
     private final float mapHeight;
     private final int tileWidth;
