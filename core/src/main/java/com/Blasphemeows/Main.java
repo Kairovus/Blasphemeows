@@ -5,9 +5,12 @@ import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.Blasphemeows.combat.GreatswordAttackStrategy;
@@ -36,8 +39,15 @@ import com.Blasphemeows.net.AuthSession;
 import com.Blasphemeows.observer.CombatLogObserver;
 import com.Blasphemeows.player.Player;
 import com.Blasphemeows.score.ScoreTracker;
-import com.Blasphemeows.state.RootedState;
+import com.Blasphemeows.state.AttackState;
 import com.Blasphemeows.state.ComboRecoveryState;
+import com.Blasphemeows.state.DashState;
+import com.Blasphemeows.state.JumpState;
+import com.Blasphemeows.state.MoveState;
+import com.Blasphemeows.state.PlayerState;
+import com.Blasphemeows.state.RootedState;
+import com.Blasphemeows.state.SeismicSlamState;
+import com.Blasphemeows.systems.AssetManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -70,6 +80,11 @@ public class Main extends ApplicationAdapter {
     private HubMapManager hubMapManager;
     private boolean debugRender = false;
 
+    // Player & Enemy Animation state
+    private float playerAnimTime = 0f;
+    private float enemyAnimTime = 0f;
+    private String lastAnimKey = "";
+
     // World entities
     private final List<Enemy> activeEnemies = new ArrayList<Enemy>();
     private final List<Projectile> activeWorldProjectiles = new ArrayList<Projectile>();
@@ -94,6 +109,9 @@ public class Main extends ApplicationAdapter {
         batch = new SpriteBatch();
         shapeRenderer = new ShapeRenderer();
         font = new BitmapFont();
+
+        // 0. Load Sprite Assets
+        AssetManager.getInstance().init();
 
         // 1. Initialize Cameras
         worldCamera = new OrthographicCamera();
@@ -534,20 +552,23 @@ public class Main extends ApplicationAdapter {
             shapeRenderer.rect(ws.getX() + 8, ws.getY() + 12, ws.getWidth() - 16, ws.getHeight() - 24);
         }
 
-        // Render Player
-        if (player.isInvincible()) {
-            shapeRenderer.setColor(Color.CYAN);
-        } else if (player.getStateMachine().getCurrentState() instanceof RootedState) {
-            shapeRenderer.setColor(Color.BROWN);
-        } else {
-            shapeRenderer.setColor(Color.WHITE);
-        }
-        shapeRenderer.rect(player.getX(), player.getY(), player.getWidth(), player.getHeight());
+        // Render Player fallback box only if sprite assets are not loaded
+        boolean hasPlayerSprite = AssetManager.getInstance().getAnimation("Meong_Idle") != null;
+        if (!hasPlayerSprite) {
+            if (player.isInvincible()) {
+                shapeRenderer.setColor(Color.CYAN);
+            } else if (player.getStateMachine().getCurrentState() instanceof RootedState) {
+                shapeRenderer.setColor(Color.BROWN);
+            } else {
+                shapeRenderer.setColor(Color.WHITE);
+            }
+            shapeRenderer.rect(player.getX(), player.getY(), player.getWidth(), player.getHeight());
 
-        // Player eye indicator
-        shapeRenderer.setColor(Color.GOLD);
-        float eyeX = player.isFacingRight() ? (player.getX() + player.getWidth() - 8) : (player.getX() + 2);
-        shapeRenderer.rect(eyeX, player.getY() + player.getHeight() - 14, 6, 6);
+            // Player eye indicator
+            shapeRenderer.setColor(Color.GOLD);
+            float eyeX = player.isFacingRight() ? (player.getX() + player.getWidth() - 8) : (player.getX() + 2);
+            shapeRenderer.rect(eyeX, player.getY() + player.getHeight() - 14, 6, 6);
+        }
 
         // Render Projectiles
         for (Projectile proj : activeWorldProjectiles) {
@@ -559,25 +580,30 @@ public class Main extends ApplicationAdapter {
             }
         }
 
-        // Render Enemies / Target Practice Dummy (Yellow element on Upper Platform in Hub)
+        // Render Enemies / Target Practice Dummy (shapes for enemies without sprite; health bar for all)
         for (Enemy enemy : activeEnemies) {
-            if (enemy.isFrozen()) {
-                shapeRenderer.setColor(Color.SKY);
-            } else if (enemy.isStunnedOrFrozen()) {
-                shapeRenderer.setColor(Color.YELLOW);
-            } else if (enemy.isTelegraphingAttack()) {
-                // On-enemy visual warning during attack preparation
-                shapeRenderer.setColor(Color.RED);
-            } else if (enemy instanceof TrainingDummy) {
-                TrainingDummy td = (TrainingDummy) enemy;
-                shapeRenderer.setColor(td.isAggressiveMode() ? Color.ORANGE : Color.YELLOW); // Target Practice Yellow
-            } else if (enemy instanceof ShieldBulwark) {
-                ShieldBulwark bulwark = (ShieldBulwark) enemy;
-                shapeRenderer.setColor(bulwark.isInVulnerableWindow() ? Color.RED : Color.DARK_GRAY);
-            } else {
-                shapeRenderer.setColor(Color.CORAL);
+            boolean isMonk = enemy.getName().toLowerCase().contains("monk");
+            boolean hasMonkSprite = isMonk && AssetManager.getInstance().getAnimation("monk_idle") != null;
+
+            if (!hasMonkSprite) {
+                if (enemy.isFrozen()) {
+                    shapeRenderer.setColor(Color.SKY);
+                } else if (enemy.isStunnedOrFrozen()) {
+                    shapeRenderer.setColor(Color.YELLOW);
+                } else if (enemy.isTelegraphingAttack()) {
+                    // On-enemy visual warning during attack preparation
+                    shapeRenderer.setColor(Color.RED);
+                } else if (enemy instanceof TrainingDummy) {
+                    TrainingDummy td = (TrainingDummy) enemy;
+                    shapeRenderer.setColor(td.isAggressiveMode() ? Color.ORANGE : Color.YELLOW); // Target Practice Yellow
+                } else if (enemy instanceof ShieldBulwark) {
+                    ShieldBulwark bulwark = (ShieldBulwark) enemy;
+                    shapeRenderer.setColor(bulwark.isInVulnerableWindow() ? Color.RED : Color.DARK_GRAY);
+                } else {
+                    shapeRenderer.setColor(Color.CORAL);
+                }
+                shapeRenderer.rect(enemy.getX(), enemy.getY(), enemy.getWidth(), enemy.getHeight());
             }
-            shapeRenderer.rect(enemy.getX(), enemy.getY(), enemy.getWidth(), enemy.getHeight());
 
             // Health bar
             float barW = enemy.getWidth();
@@ -587,15 +613,183 @@ public class Main extends ApplicationAdapter {
             shapeRenderer.setColor(enemy instanceof TrainingDummy ? Color.GREEN : Color.RED);
             shapeRenderer.rect(enemy.getX(), enemy.getY() + enemy.getHeight() + 6, barW * hpPct, 5);
         }
+        shapeRenderer.end();
 
         // ==========================================
-        // ALWAYS-VISIBLE DEBUG HITBOX VISUALIZATION
+        // RENDER PLAYER & ENEMY SPRITES
+        // ==========================================
+        enemyAnimTime += delta;
+        batch.setProjectionMatrix(worldCamera.combined);
+        batch.begin();
+
+        // Enemy Sprites (Corrupted Monk / Temple Monk)
+        for (Enemy enemy : activeEnemies) {
+            if (!enemy.isAlive()) continue;
+            if (!enemy.getName().toLowerCase().contains("monk")) continue;
+
+            String enemyAnimKey = "monk_idle";
+            Hitbox ehb = enemy.getCurrentAttackHitbox();
+            if (ehb != null && !ehb.isFinished()) {
+                enemyAnimKey = "monk_attack";
+            } else if (Math.abs(enemy.getX() - player.getX()) > 70f) {
+                enemyAnimKey = "monk_walk";
+            }
+
+            Animation<TextureRegion> eAnim = AssetManager.getInstance().getAnimation(enemyAnimKey);
+            if (eAnim != null) {
+                TextureRegion eFrame = eAnim.getKeyFrame(enemyAnimTime, true);
+
+                if (enemy.isFrozen()) {
+                    batch.setColor(Color.SKY);
+                } else if (enemy.isStunnedOrFrozen()) {
+                    batch.setColor(Color.YELLOW);
+                } else {
+                    batch.setColor(Color.WHITE);
+                }
+
+                float aspectRatio = (float) eFrame.getRegionWidth() / (float) eFrame.getRegionHeight();
+                float eDrawH = 120f;
+                float eDrawW = eDrawH * aspectRatio;
+                boolean enemyFacingRight = player.getX() >= enemy.getX();
+
+                float eDrawX = enemy.getX() + (enemy.getWidth() / 2f) - (eDrawW / 2f);
+                float eDrawY = enemy.getY();
+
+                if (enemyFacingRight) {
+                    batch.draw(eFrame, eDrawX, eDrawY, eDrawW, eDrawH);
+                } else {
+                    batch.draw(eFrame, eDrawX + eDrawW, eDrawY, -eDrawW, eDrawH);
+                }
+                batch.setColor(Color.WHITE);
+            }
+        }
+
+        // Player Sprite (Si Meong)
+        String animKey = "Meong_Idle";
+        PlayerState state = player.getStateMachine().getCurrentState();
+
+        if (state instanceof AttackState) {
+            AttackState atkState = (AttackState) state;
+            String seq = player.getComboManager().getSequenceString();
+            String baseAttackKey;
+
+            if (atkState.getAttackData() != null && atkState.getAttackData().isHeavy()) {
+                if (seq.endsWith("L, L, H")) {
+                    baseAttackKey = "Meong_LLH_3";
+                } else if (seq.endsWith("H, H")) {
+                    baseAttackKey = "Meong_HH_2";
+                } else {
+                    baseAttackKey = "Meong_Heavy";
+                }
+            } else {
+                if (seq.endsWith("L, L, L")) {
+                    baseAttackKey = "Meong_LLL_3";
+                } else if (seq.endsWith("L, L")) {
+                    baseAttackKey = "Meong_LLL_2";
+                } else {
+                    baseAttackKey = "Meong_Light";
+                }
+            }
+
+            animKey = baseAttackKey + "#" + seq;
+        } else if (state instanceof DashState) {
+            animKey = "Meong_Dash";
+        } else if (state instanceof JumpState || state instanceof SeismicSlamState) {
+            animKey = (player.getVelocityY() > -60f) ? "Meong_MauLompat" : "Meong_Lompat";
+        } else if (state instanceof MoveState) {
+            animKey = "Meong_Run";
+        }
+
+        if (!animKey.equals(lastAnimKey)) {
+            playerAnimTime = 0f;
+            lastAnimKey = animKey;
+        } else {
+            playerAnimTime += delta;
+        }
+
+        String lookupKey = animKey.contains("#") ? animKey.substring(0, animKey.indexOf("#")) : animKey;
+        Animation<TextureRegion> currentAnim = AssetManager.getInstance().getAnimation(lookupKey);
+        if (currentAnim == null) {
+            currentAnim = AssetManager.getInstance().getAnimation("Meong_Idle");
+        }
+
+        if (currentAnim != null) {
+            TextureRegion frame = currentAnim.getKeyFrame(playerAnimTime);
+
+            if (player.isInvincible()) {
+                batch.setColor(Color.CYAN);
+            } else if (state instanceof RootedState) {
+                batch.setColor(Color.BROWN);
+            } else {
+                batch.setColor(Color.WHITE);
+            }
+
+            boolean isLompatAnim = lookupKey.equals("Meong_MauLompat") || lookupKey.equals("Meong_Lompat");
+            boolean isAttackAnim = lookupKey.equals("Meong_Light")
+                || lookupKey.equals("Meong_Heavy")
+                || lookupKey.startsWith("Meong_LLL")
+                || lookupKey.startsWith("Meong_HH")
+                || lookupKey.startsWith("Meong_LLH");
+
+            float drawW;
+            float drawH;
+            float xOffset;
+            float drawY;
+
+            if (isLompatAnim) {
+                drawW = 62f;
+                drawH = 78f;
+                xOffset = player.isFacingRight() ? 2f : -2f;
+                drawY = player.getY() - 2f;
+            } else if (isAttackAnim) {
+                drawW = 140f;
+                drawH = 140f;
+                xOffset = player.isFacingRight() ? 14f : -14f;
+                drawY = player.getY() - 36f;
+            } else if (lookupKey.equals("Meong_Dash")) {
+                float aspectRatio = (float) frame.getRegionWidth() / (float) frame.getRegionHeight();
+                drawH = 205f;
+                drawW = drawH * aspectRatio;
+                xOffset = player.isFacingRight() ? 2f : -2f;
+                drawY = player.getY() - 78f;
+            } else if (lookupKey.equals("Meong_Run")) {
+                drawW = 140f;
+                drawH = 140f;
+                xOffset = player.isFacingRight() ? 14f : -14f;
+                drawY = player.getY() - 20f;
+            } else {
+                drawW = 140f;
+                drawH = 140f;
+                xOffset = player.isFacingRight() ? 14f : -14f;
+                drawY = player.getY() - 28f;
+            }
+
+            float drawX = player.getX() + (player.getWidth() / 2f) - (drawW / 2f) + xOffset;
+
+            if (player.isFacingRight()) {
+                batch.draw(frame, drawX, drawY, drawW, drawH);
+            } else {
+                batch.draw(frame, drawX + drawW, drawY, -drawW, drawH);
+            }
+            batch.setColor(Color.WHITE);
+        }
+        batch.end();
+
+        // ==========================================
+        // ALWAYS-VISIBLE DEBUG HITBOX VISUALIZATION (Overlaid with alpha)
         // (Player Attack Hitboxes & Enemy Attack Hitboxes)
         // ==========================================
-        // 1. Player attack hitboxes
+        Gdx.gl.glEnable(GL20.GL_BLEND);
+        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+
+        shapeRenderer.setProjectionMatrix(worldCamera.combined);
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+
+        // 1. Player attack hitboxes (semi-transparent)
         for (Hitbox hb : player.getActiveHitboxes()) {
             if (!hb.isFinished()) {
-                shapeRenderer.setColor(hb.getDebugColor());
+                Color c = hb.getDebugColor();
+                shapeRenderer.setColor(c.r, c.g, c.b, 0.45f);
                 shapeRenderer.rect(hb.getX(), hb.getY(), hb.getWidth(), hb.getHeight());
             }
         }
@@ -604,13 +798,14 @@ public class Main extends ApplicationAdapter {
         for (Enemy enemy : activeEnemies) {
             Hitbox ehb = enemy.getCurrentAttackHitbox();
             if (ehb != null && !ehb.isFinished()) {
-                shapeRenderer.setColor(ehb.getDebugColor());
+                Color c = ehb.getDebugColor();
+                shapeRenderer.setColor(c.r, c.g, c.b, 0.45f);
                 shapeRenderer.rect(ehb.getX(), ehb.getY(), ehb.getWidth(), ehb.getHeight());
             }
         }
         shapeRenderer.end();
 
-        // 3. Enemy Body Hurtbox outlines (Line mode)
+        // 3. Enemy & Player Body Hurtbox outlines (Line mode)
         shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
         for (Enemy enemy : activeEnemies) {
             if (enemy.isAlive()) {
@@ -623,10 +818,19 @@ public class Main extends ApplicationAdapter {
         // Player body hurtbox outline
         shapeRenderer.setColor(Color.LIME);
         shapeRenderer.rect(player.getX() - 1, player.getY() - 1, player.getWidth() + 2, player.getHeight() + 2);
+
+        // Player attack hitbox outlines
+        for (Hitbox hb : player.getActiveHitboxes()) {
+            if (!hb.isFinished()) {
+                shapeRenderer.setColor(hb.getDebugColor());
+                shapeRenderer.rect(hb.getX(), hb.getY(), hb.getWidth(), hb.getHeight());
+            }
+        }
         if (debugRender && cur == GameManager.Region.TUTORIAL_HUB && hubMapManager != null) {
             hubMapManager.renderDebug(shapeRenderer);
         }
         shapeRenderer.end();
+        Gdx.gl.glDisable(GL20.GL_BLEND);
 
         // Render World Text (Labels & Prompts)
         batch.setProjectionMatrix(worldCamera.combined);
